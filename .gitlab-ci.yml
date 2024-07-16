@@ -1,0 +1,24 @@
+variables:
+  AWS_PROFILE: gitlab-runner
+  TERRAFORM_MAIN_PROJECT: infra/main
+  TF_PLUGIN_CACHE_DIR: /home/gitlab-runner/terraform.d/plugin-cache
+
+stages:
+  - terraform_kube_apply
+  - ansible_kube_deploy
+  - terraform_kube_configure
+  - destroy
+
+include:
+  - project: 'path/to/project'
+    ref: master
+    file: 'ci_jobs/k8s.apply.yml'
+  - project: 'path/to/project'
+    ref: master
+    file: 'ci_jobs/k8s.deploy.yml'
+  - project: 'path/to/project'
+    ref: master
+    file: 'ci_jobs/k8s.configure.yml'
+#  - project: 'path/to/project'
+#    ref: master
+#    file: 'ci_jobs/k8s.destroy.yml'

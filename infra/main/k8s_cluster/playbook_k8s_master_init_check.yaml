@@ -1,0 +1,8 @@
+- hosts: masters[0]
+  become: yes
+  become_user: ubuntu
+  tasks:
+    - name: Check if master has already joined
+      shell: |
+        export KUBECONFIG=~/.kube/admin_config.conf
+        kubeadm token list 2>>/dev/null | grep forever | if [ $(wc -l) != "0" ]; then echo "true"; else echo "k8s join token doesn't exist" && exit 1; fi

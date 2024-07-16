@@ -1,0 +1,44 @@
+- hosts: workers
+  serial: 1
+  become: yes
+  become_user: ubuntu
+  tasks:
+    - name: Check if worker has already joined
+      shell: |
+        export KUBECONFIG=~/.kube/admin_config.conf
+        kubeadm token list 2>>/dev/null | grep forever | if [ $(wc -l) != "0" ]; then echo "true"; else echo "k8s join token doesn't exist"; fi
+      register: is_worker_already_joined
+    - name: Check if worker has already joined
+      when: is_worker_already_joined.stdout != "true"
+      shell: mkdir .kube >> /dev/null 2>&1 || true
+      args:
+        chdir: $HOME
+        executable: /usr/bin/bash
+    - name: Upload kubeconfig
+      when: is_worker_already_joined.stdout != "true"
+      copy:
+        src: from_main_master/.kube/admin_config.conf
+        dest: /home/ubuntu/.kube/admin_config.conf
+        owner: ubuntu
+        group: ubuntu
+        mode: '0500'
+    - name: Upload join script
+      when: is_worker_already_joined.stdout != "true"
+      copy:
+        src: from_main_master/k8s_join_command.sh
+        dest: /home/ubuntu/k8s_join_command.sh
+        owner: ubuntu
+        group: ubuntu
+        mode: '0500'
+    - name: Execute join script
+      when: is_worker_already_joined.stdout != "true"
+      shell: |
+        echo "export KUBECONFIG=~/.kube/admin_config.conf" | tee -a .bashrc
+        export KUBECONFIG=~/.kube/admin_config.conf
+        echo -n "--v=7" | tee -a k8s_join_command.sh
+        sudo ./k8s_join_command.sh > join.log 2>&1
+      async: 1200
+      poll: 20
+      args:
+        chdir: $HOME
+        executable: /usr/bin/bash

@@ -1,0 +1,48 @@
+- hosts: gitlab-master
+  roles:
+    - role: roles/common_cert
+  tasks:
+    - name: Copy script files
+      ansible.builtin.copy:
+        src: scripts/
+        dest: /home/ubuntu/
+        owner: ubuntu
+        group: ubuntu
+        mode: '0740'
+    - name: Execute data volume mount script
+      shell: ./1_disk_mount.sh nvme 25G /mnt/gitlab_data > 1_mount.log 2>&1
+      become: yes
+      become_user: ubuntu
+      args:
+        chdir: $HOME
+        executable: /usr/bin/bash
+    - name: Execute config volume mount script
+      shell: ./1_disk_mount.sh nvme 3G /etc/gitlab >> 1_mount.log 2>&1
+      become: yes
+      become_user: ubuntu
+      args:
+        chdir: $HOME
+        executable: /usr/bin/bash
+    - name: Execute gitlab install script
+      shell: ./2_gitlab_install.sh > 2_install.log 2>&1
+      become: yes
+      become_user: ubuntu
+      async: 1200
+      poll: 20
+      args:
+        chdir: $HOME
+        executable: /usr/bin/bash
+    - name: Execute gitlab restore script
+      shell: ./3_gitlab_restore_script.sh > 3_restore.log 2>&1
+      become: yes
+      become_user: ubuntu
+      args:
+        chdir: $HOME
+        executable: /usr/bin/bash
+    - name: Execute gitlab backup settings script
+      shell: ./4_gitlab_settings_backup.sh > 4_settings_backup.log 2>&1
+      become: yes
+      become_user: ubuntu
+      args:
+        chdir: $HOME
+        executable: /usr/bin/bash

@@ -1,0 +1,51 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: ingress-nginx-wildcard-tls-certificate
+  namespace: ingress-nginx
+spec:
+  # Secret names are always required.
+  secretName: ingress-nginx-wildcard-tls-secret
+
+  privateKey:
+    algorithm: RSA
+    encoding: PKCS1
+    size: 2048
+
+  duration: 2160h # 90d
+  renewBefore: 360h # 15d
+
+  isCA: false
+  usages:
+    - server auth
+    - client auth
+
+  subject:
+    organizations:
+      - Jiraffe.example-domain.com
+  # The use of the common name field has been deprecated since 2000 and is
+  # discouraged from being used.
+  commonName: jiraffe.example-domain.com
+
+  # The literalSubject field is exclusive with subject and commonName. It allows
+  # specifying the subject directly as a string. This is useful for when the order
+  # of the subject fields is important or when the subject contains special types
+  # which can be specified by their OID.
+  #
+  # literalSubject: "O=jetstack, CN=example.com, 2.5.4.42=John, 2.5.4.4=Doe"
+
+  # At least one of commonName (possibly through literalSubject), dnsNames, uris, emailAddresses, ipAddresses or otherNames is required.
+  dnsNames:
+    - "jiraffe.example-domain.com"
+#    - "*.jiraffe.example-domain.com"
+#    - "*.k8s.jiraffe.example-domain.com"
+#    - "*.api.jiraffe.example-domain.com"
+#  emailAddresses:
+#    - admin@example-domain.com
+
+  # Issuer references are always required.
+  issuerRef:
+    name: letsencrypt-cluster-issuer
+    # We can reference ClusterIssuers by changing the kind here.
+    # The default value is Issuer (i.e. a locally namespaced Issuer)
+    kind: ClusterIssuer

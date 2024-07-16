@@ -1,0 +1,66 @@
+.abstract_ansible: &ansible_template
+  tags:
+    - infra-shell-bash-runner
+  cache:
+    - key:
+        files:
+          - requirements.txt
+      paths:
+        - ansible_venv
+  dependencies:
+    - k8s-apply
+  script:
+    - |
+      mkdir ansible_venv >> /dev/null 2>&1 || true
+      python3 -m venv ansible_venv
+      source ansible_venv/bin/activate
+      pip install -r requirements.txt
+      
+      cd ${TERRAFORM_MAIN_PROJECT}
+      echo "Start terraform ${ANSIBLE_ACTION}"
+      
+      ./k8s_cluster/scripts/${HOSTS}/${ANSIBLE_ACTION}.sh
+
+masters init or join:
+  <<: *ansible_template
+  stage: ansible_kube_deploy
+  variables:
+    HOSTS: master
+    ANSIBLE_ACTION: init_or_join
+    K8S_CLUSTER_VERSIONS_COUNT: all
+  rules:
+    - if: '$TEST_CI'
+#      when: manual
+
+workers join:
+  <<: *ansible_template
+  stage: ansible_kube_deploy
+  variables:
+    HOSTS: worker
+    ANSIBLE_ACTION: join
+    K8S_CLUSTER_VERSIONS_COUNT: all
+  rules:
+    - if: '$TEST_CI'
+#      when: manual
+
+workers reset:
+  <<: *ansible_template
+  stage: destroy
+  variables:
+    HOSTS: worker
+    ANSIBLE_ACTION: reset
+    K8S_CLUSTER_VERSIONS_COUNT: all
+  rules:
+    - if: '$TEST_CI'
+      when: manual
+
+masters reset:
+  <<: *ansible_template
+  stage: destroy
+  variables:
+    HOSTS: master
+    ANSIBLE_ACTION: reset
+    K8S_CLUSTER_VERSIONS_COUNT: all
+  rules:
+    - if: '$TEST_CI'
+      when: manual

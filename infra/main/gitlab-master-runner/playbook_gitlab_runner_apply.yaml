@@ -1,0 +1,36 @@
+- hosts: gitlab-master-runner
+  become: yes
+  become_user: ubuntu
+  roles:
+    - role: roles/common_cert
+  tasks:
+    - name: Copy script files
+      copy:
+        src: scripts/
+        dest: /home/ubuntu/
+        owner: ubuntu
+        group: ubuntu
+        mode: '0740'
+    - name: Create gitlab-runner user
+      shell: sudo useradd --comment 'GitLab Runner' --create-home gitlab-runner --shell /bin/bash && sudo rf -f /home/gitlab-runner/.bash_logout > 0_add_gitlab_runner_user.log 2>&1 || true
+    - name: Copy cert for gitlab-runner user
+      shell: sudo cp -r .ssh /home/gitlab-runner/ && sudo chown -R gitlab-runner:gitlab-runner /home/gitlab-runner/.ssh
+    - name: Install python3, aws-cli, terraform
+      shell: ./1_install_tools.sh > 1_install_tools.log 2>&1
+      async: 1200
+      poll: 20
+      args:
+        chdir: $HOME
+        executable: /usr/bin/bash
+    - name: Add aws iam user credentials for gitlab-runner user
+      shell: ./2_add_aws_creds.sh {{ aws_access_key }} {{ aws_secret_key }} >> 2_add_aws_creds.log 2>&1
+      args:
+        chdir: $HOME
+        executable: /usr/bin/bash
+    - name: Link runner with gitlab
+      shell: ./3_link_runner_with_gitlab.sh > 3_link_runner_with_gitlab.log 2>&1
+      async: 1200
+      poll: 20
+      args:
+        chdir: $HOME
+        executable: /usr/bin/bash

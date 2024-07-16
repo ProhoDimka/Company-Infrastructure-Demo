@@ -1,0 +1,52 @@
+- hosts: masters
+  serial: 1
+  become: yes
+  become_user: ubuntu
+  tasks:
+    - name: Check if master has already joined
+      shell: |
+        export KUBECONFIG=~/.kube/admin_config.conf
+        kubeadm token list 2>>/dev/null | grep forever | if [ $(wc -l) != "0" ]; then echo "true"; else echo "k8s join token doesn't exist"; fi
+      register: is_master_already_joined
+    - name: Create dirs for secrets
+      when: is_master_already_joined.stdout != "true"
+      shell: |
+        mkdir .kube >> /dev/null 2>&1 || true
+        mkdir -p "etc/kubernetes/pki/etcd" >> /dev/null 2>&1 | true
+        sudo mkdir -p "/etc/kubernetes/pki/etcd" >> /dev/null 2>&1 | true
+      args:
+        chdir: $HOME
+        executable: /usr/bin/bash
+    - name: Upload secrets
+      when: is_master_already_joined.stdout != "true"
+      copy:
+        src: "from_main_master/{{ item | regex_replace('^/', '') }}"
+        dest: "{{ item | regex_replace('^/', '') }}"
+        owner: ubuntu
+        group: ubuntu
+#        mode: '0500'
+      with_lines: cat secrets_list.txt
+    - name: Upload join script
+      when: is_master_already_joined.stdout != "true"
+      copy:
+        src: scripts/master/init_or_join/join.sh
+        dest: /home/ubuntu/join.sh
+        owner: ubuntu
+        group: ubuntu
+        mode: '0500'
+    - name: Upload secrets list
+      when: is_master_already_joined.stdout != "true"
+      copy:
+        src: secrets_list.txt
+        dest: /home/ubuntu/secrets_list.txt
+        owner: ubuntu
+        group: ubuntu
+        mode: '0400'
+    - name: Execute join script
+      when: is_master_already_joined.stdout != "true"
+      shell: ./join.sh > join.log 2>&1
+      async: 1200
+      poll: 20
+      args:
+        chdir: $HOME
+        executable: /usr/bin/bash

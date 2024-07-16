@@ -1,0 +1,39 @@
+.abstract_terraform: &terraform_template
+  tags:
+    - infra-shell-bash-runner
+  stage: terraform_kube_apply
+  script:
+    - |
+      echo "Start terraform ${TERRAFORM_ACTION}"
+      
+      mkdir -p "${TF_PLUGIN_CACHE_DIR}" >> /dev/null 2>&1 || true
+      cd "${TERRAFORM_MAIN_PROJECT}"
+      
+      terraform init
+      ./infra_launch_2nd_k8s_cluster_apply.sh
+
+k8s-apply:
+  <<: *terraform_template
+  variables:
+    TERRAFORM_ACTION: apply -auto-approve
+  artifacts:
+    paths:
+      - "**/*.hosts"
+      - "**/*.env"
+  rules:
+    - if: '$TEST_CI'
+#      when: manual
+
+#k8s-validate:
+#  <<: *terraform_template
+#  variables:
+#    TERRAFORM_ACTION: validate
+#  rules:
+#    - if: '$TEST_CI'
+#
+#k8s-plan:
+#  <<: *terraform_template
+#  variables:
+#    TERRAFORM_ACTION: plan
+#  rules:
+#    - if: '$TEST_CI'

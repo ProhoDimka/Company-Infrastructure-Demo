@@ -1,0 +1,16 @@
+- hosts: gitlab-master
+  tasks:
+    - name: Copy script files
+      ansible.builtin.copy:
+        src: scripts/
+        dest: /home/ubuntu/
+        owner: ubuntu
+        group: ubuntu
+        mode: '0740'
+    - name: Execute the backup command in remote host
+      shell: ./gitlab_backup_script.sh
+      become: yes
+      become_user: ubuntu
+      args:
+        chdir: $HOME
+        executable: /usr/bin/bash

@@ -1,0 +1,38 @@
+- hosts: masters[0]
+  become: yes
+  become_user: ubuntu
+  tasks:
+    - name: Upload init script
+      copy:
+        src: scripts/master/init_or_join/init.sh
+        dest: /home/ubuntu/init.sh
+        owner: ubuntu
+        group: ubuntu
+        mode: '0500'
+    - name: Upload .init.env script
+      copy:
+        src: .init.env
+        dest: /home/ubuntu/.init.env
+        owner: ubuntu
+        group: ubuntu
+        mode: '0500'
+    - name: Upload secrets list
+      copy:
+        src: secrets_list.txt
+        dest: /home/ubuntu/secrets_list.txt
+        owner: ubuntu
+        group: ubuntu
+        mode: '0400'
+    - name: Execute init script
+      shell: ./init.sh > init.log 2>&1
+      async: 1200
+      poll: 20
+      args:
+        chdir: $HOME
+        executable: /usr/bin/bash
+    - name: Download secrets list
+      fetch:
+        src: "{{ item | regex_replace('^/', '') }}"
+        dest: "from_main_master/{{ item | regex_replace('^/', '') }}"
+        flat: yes
+      with_lines: cat secrets_list.txt

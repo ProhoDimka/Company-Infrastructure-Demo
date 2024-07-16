@@ -1,0 +1,14 @@
+---
+# tasks file for roles/common_cert
+- name: add common ssh public cert to authorized_keys
+  ansible.posix.authorized_key:
+    user: ubuntu
+    state: present
+    key: "{{ lookup('file', '/home/your-linux-user/.ssh/k8s-nodes.pub') }}"
+- name: add common ssh private key
+  ansible.builtin.copy:
+    src: /home/your-linux-user/.ssh/k8s-nodes
+    dest: /home/ubuntu/.ssh/id_rsa
+    owner: ubuntu
+    group: ubuntu
+    mode: '0600'

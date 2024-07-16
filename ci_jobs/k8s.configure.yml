@@ -1,0 +1,48 @@
+.abstract_terraform: &terraform_template
+  tags:
+    - infra-shell-bash-runner
+  stage: terraform_kube_configure
+  cache:
+    - key:
+        files:
+          - requirements.txt
+      paths:
+        - ansible_venv
+  dependencies:
+    - k8s-apply
+  script:
+    - |
+      mkdir ansible_venv >> /dev/null 2>&1 || true
+      python3 -m venv ansible_venv
+      source ansible_venv/bin/activate
+      pip install -r requirements.txt
+      
+      echo "Start terraform ${TERRAFORM_ACTION}"
+      
+      mkdir -p "${TF_PLUGIN_CACHE_DIR}" >> /dev/null 2>&1 || true
+      cd "${TERRAFORM_MAIN_PROJECT}"
+      
+      terraform init
+      ./infra_launch_3rd_k8s_cluster_configure.sh
+
+k8s-config-apply:
+  <<: *terraform_template
+  variables:
+    TERRAFORM_ACTION: apply -auto-approve
+  rules:
+    - if: '$TEST_CI'
+#      when: manual
+
+#k8s-config-validate:
+#  <<: *terraform_template
+#  variables:
+#    TERRAFORM_ACTION: validate
+#  rules:
+#    - if: '$TEST_CI'
+#
+#k8s-config-plan:
+#  <<: *terraform_template
+#  variables:
+#    TERRAFORM_ACTION: plan
+#  rules:
+#    - if: '$TEST_CI'
