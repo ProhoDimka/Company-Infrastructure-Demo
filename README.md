@@ -96,6 +96,18 @@ curl --request POST \
 15. To download and install kubeconfig execute:
 ```shell
 # Attention! That execution will overwrite your original kubeconfig file
+./infra_launch_2nd_k8s_cluster_apply.sh
 ./infra_k8s_get_kubeconfig.sh true
 cp k8s_cluster/from_main_master/.kube/admin_config.conf ~/.kube/config
+```
+16. Vault pod won't start without external help:
+```shell
+kubectl config set-context --current --namespace hashicorp
+kubectl exec vault-0 -- vault status
+kubectl exec vault-0 -- vault operator init -key-shares=1 -key-threshold=1 -format=json > cluster-keys.json
+VAULT_UNSEAL_KEY=$(cat cluster-keys.json | jq -r ".unseal_keys_b64[]")
+# Need to do this action for all vault replicas
+kubectl exec vault-0 -- vault operator unseal $VAULT_UNSEAL_KEY
+# You can use this token for vault login
+cat cluster-keys.json | jq -r ".root_token"
 ```
