@@ -1,6 +1,6 @@
 # Introduction
-This demo main purpose is to show possibilities of deploying organization infrastructure with cloud native approach.
-After you will finish installation process, you will have:
+The main purpose of this demo is to demonstrate the capabilities of deploying an organization's infrastructure using a cloud-based approach.
+Once you complete the installation process, you will have:
 1. Gitlab instance
 2. Gitlab Runner Shell instance
 3. Kubernetes self-managed cluster
@@ -71,8 +71,8 @@ set RUNNER_JOIN_TOKEN environment variable
 ```shell
 ./infra_launch_1st_2_gitlab_runner.sh
 ```
-9. Next infrastructure deploying stages implimented with gitlab pipline.
-10. In case it was you first time launch and gitlab was never backuped before:
+9. Next infrastructure deploying stages were implimented with gitlab pipline.
+10. In case it was your first time deploy and gitlab was never backuped before:
     * Setup new project
     * upload your personal ssh public key
     * add remotes in your local to push this project to gitlab
