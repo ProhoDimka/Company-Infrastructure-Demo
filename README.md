@@ -61,6 +61,7 @@ packer build packer_ubuntu.pkr.hcl
 5. After build will finished successfully set ami_id value in [TF Values File](infra/main/variables.tf)
 6. Initialize common infrastructure and gitlab standalone instance:
 ```shell
+cd ..
 ./infra_launch_1st_1_main_init_local.sh
 ```
 7. In case it was you first time launch and gitlab was never backuped before:
