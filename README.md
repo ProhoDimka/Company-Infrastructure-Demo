@@ -1,7 +1,13 @@
 # Introduction
 This demo main purpose is to show possibilities of deploying organization infrastructure with cloud native approach.
+After you will finish installation process, you will have:
+1. Gitlab instance
+2. Gitlab Runner Shell instance
+3. Kubernetes self-managed cluster
+4. PostgreSQL in k8s
+5. Vault in k8s
 
-# Prerequisitus
+# Prerequisites
 You should have:
 * an [AWS Account Credentials](https://docs.aws.amazon.com/cli/v1/userguide/cli-configure-files.html)
 * a registered domain name, because AWS hosted domain zone will be created
@@ -86,3 +92,9 @@ curl --request POST \
     "${GITLAB_PROJECT_URL}"
 ```
 14. Follow pipeline logs in Gitlab
+15. To download and install kubeconfig execute:
+```shell
+# Attention! That execution will overwrite your original kubeconfig file
+./infra_k8s_get_kubeconfig.sh true
+cp k8s_cluster/from_main_master/.kube/admin_config.conf ~/.kube/config
+```
